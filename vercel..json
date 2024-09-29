@@ -1,12 +1,16 @@
 {
     "version": 2,
     "builds": [
-      { "src": "api/**/*.py", "use": "@vercel/python" }
+      {
+        "src": "api/routes.py",
+        "use": "@vercel/python"
+      }
     ],
     "routes": [
-      { "src": "/api/encrypt", "dest": "api/routes.py" },
-      { "src": "/api/decrypt", "dest": "api/routes.py" },
-      { "src": "/(.*)", "dest": "api/routes.py" } 
+      {
+        "src": "/(.*)",
+        "dest": "api/routes.py"
+      }
     ]
   }
   
