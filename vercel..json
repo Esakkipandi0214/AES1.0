@@ -4,7 +4,9 @@
       { "src": "api/**/*.py", "use": "@vercel/python" }
     ],
     "routes": [
-      { "src": "/(.*)", "dest": "api/routes.py" }
+      { "src": "/api/encrypt", "dest": "api/routes.py" },
+      { "src": "/api/decrypt", "dest": "api/routes.py" },
+      { "src": "/(.*)", "dest": "api/routes.py" } 
     ]
   }
   
