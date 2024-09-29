@@ -4,6 +4,10 @@ from .encryption_utils.encryptor import encrypt_file, decrypt_file
 
 app = Flask(__name__)
 
+@app.route('/')
+def home():
+    return jsonify({"message": "Hello from Flask!"})
+
 # Route for encryption
 @app.route('/encrypt', methods=['POST'])
 def encrypt():
