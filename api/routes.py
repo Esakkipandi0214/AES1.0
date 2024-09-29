@@ -1,50 +1,55 @@
 import os
-import logging
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from .encryption_utils.encryptor import encrypt_file, decrypt_file
 
 app = Flask(__name__)
-logging.basicConfig(level=logging.DEBUG)
 
-@app.route('/')
+@app.route('/api/')
 def home():
     return jsonify({"message": "Hello from Flask!"})
 
-@app.route('/encrypt', methods=['POST'])
+# Route for encryption
+@app.route('/api/encrypt', methods=['POST'])
 def encrypt():
+    if 'file' not in request.files or 'password' not in request.form:
+        return jsonify({'error': 'File and password are required'}), 400
+
+    file = request.files['file']
+    password = request.form['password']
+
     try:
-        if 'file' not in request.files or 'password' not in request.form:
-            return jsonify({'error': 'File and password are required'}), 400
-
-        file = request.files['file']
-        password = request.form['password']
         content = file.read()
-
         encrypted_content = encrypt_file(content, password)
 
-        return encrypted_content, 200, {
-            'Content-Disposition': f'attachment; filename="{file.filename}.enc"'
-        }
-    except Exception as e:
-        logging.error(f"Error in encrypt: {str(e)}")
-        return jsonify({'error': 'Internal Server Error'}), 500
+        # Save encrypted content to a temporary file
+        temp_filename = f"{file.filename}.enc"
+        with open(temp_filename, 'wb') as temp_file:
+            temp_file.write(encrypted_content)
 
-@app.route('/decrypt', methods=['POST'])
+        return send_file(temp_filename, as_attachment=True, attachment_filename=temp_filename)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Route for decryption
+@app.route('/api/decrypt', methods=['POST'])
 def decrypt():
+    if 'file' not in request.files or 'password' not in request.form:
+        return jsonify({'error': 'Encrypted file and password are required'}), 400
+
+    file = request.files['file']
+    password = request.form['password']
+
     try:
-        if 'file' not in request.files or 'password' not in request.form:
-            return jsonify({'error': 'Encrypted file and password are required'}), 400
-
-        file = request.files['file']
-        password = request.form['password']
         encrypted_content = file.read()
-
         decrypted_content = decrypt_file(encrypted_content, password)
-        original_filename = file.filename.replace(".enc", "")
 
-        return decrypted_content, 200, {
-            'Content-Disposition': f'attachment; filename="{original_filename}"'
-        }
+        # Save decrypted content to a temporary file
+        original_filename = file.filename.replace(".enc", "")
+        with open(original_filename, 'wb') as temp_file:
+            temp_file.write(decrypted_content)
+
+        return send_file(original_filename, as_attachment=True, attachment_filename=original_filename)
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
     except Exception as e:
-        logging.error(f"Error in decrypt: {str(e)}")
-        return jsonify({'error': 'Internal Server Error'}), 500
+        return jsonify({'error': str(e)}), 500
